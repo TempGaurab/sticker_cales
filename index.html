@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forecasting Sticker Sales Presentation</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        overflow: hidden;
+      }
+
+      .presentation-container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .slide {
+        width: 90%;
+        max-width: 1200px;
+        height: 80vh;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        display: none;
+        overflow-y: auto;
+        position: relative;
+      }
+
+      .slide.active {
+        display: block;
+        animation: slideIn 0.5s ease-in-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .slide h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-align: center;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      .slide h2 {
+        color: #34495e;
+        font-size: 2em;
+        margin-bottom: 15px;
+        border-left: 5px solid #3498db;
+        padding-left: 15px;
+      }
+
+      .slide h3 {
+        color: #2c3e50;
+        font-size: 1.4em;
+        margin-bottom: 10px;
+        margin-top: 20px;
+      }
+
+      .slide p,
+      .slide li {
+        font-size: 1.1em;
+        line-height: 1.6;
+        color: #34495e;
+        margin-bottom: 10px;
+      }
+
+      .slide ul {
+        margin-left: 20px;
+        margin-bottom: 20px;
+      }
+
+      .slide li {
+        margin-bottom: 8px;
+      }
+
+      .highlight {
+        background: linear-gradient(120deg, #a8e6cf 0%, #88d8a3 100%);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #27ae60;
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .metric-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .metric-card h4 {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+      }
+
+      .metric-card .value {
+        font-size: 2em;
+        font-weight: bold;
+      }
+
+      .navigation {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 1000;
+      }
+
+      .nav-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid white;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .nav-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .slide-counter {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        font-weight: bold;
+      }
+
+      .formula {
+        background: #ecf0f1;
+        padding: 15px;
+        border-radius: 10px;
+        font-family: "Courier New", monospace;
+        text-align: center;
+        margin: 15px 0;
+        border: 2px solid #bdc3c7;
+      }
+
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin: 20px 0;
+      }
+
+      .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .results-table th,
+      .results-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+
+      .results-table th {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        font-weight: bold;
+      }
+
+      .results-table tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      .results-table tr:hover {
+        background-color: #e8f4f8;
+      }
+
+      .best-score {
+        background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+        color: white !important;
+        font-weight: bold;
+      }
+
+      .author-info {
+        text-align: center;
+        margin-top: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="presentation-container">
+      <div class="slide-counter">
+        <span id="slide-counter">1 / 12</span>
+      </div>
+
+      <!-- Slide 1: Title -->
+      <div class="slide active">
+        <h1>Forecasting Sticker Sales</h1>
+        <h2 style="text-align: center; margin-top: 40px">
+          A Comprehensive Analysis Using Regression Models
+        </h2>
+
+        <div class="author-info">
+          <h3>Authors</h3>
+          <p><strong>Gaurab Baral¹ and Junxiu Zhou²</strong></p>
+          <p>Northern Kentucky University, Highland Heights KY 41076, USA</p>
+          <p>¹ baralg1@nku.edu | ² zhouj2@nku.edu</p>
+        </div>
+
+        <div class="highlight">
+          <h3>Key Achievement</h3>
+          <p>
+            Ensemble model combining Transformer, LightGBM, and XGBoost achieved
+            <strong>MAPE of 0.04893</strong>, outperforming traditional
+            regression techniques
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 2: Introduction & Motivation -->
+      <div class="slide">
+        <h1>Introduction & Motivation</h1>
+
+        <h2>Why Sales Forecasting Matters</h2>
+        <ul>
+          <li>Critical for business decision-making</li>
+          <li>Drives inventory management strategies</li>
+          <li>Informs marketing initiatives and strategic planning</li>
+          <li>Helps balance stock levels without overcommitting resources</li>
+        </ul>
+
+        <h2>Research Objectives</h2>
+        <ul>
+          <li>Predict sticker sales across multiple countries</li>
+          <li>Compare traditional vs. advanced machine learning approaches</li>
+          <li>Evaluate effectiveness of ensemble methods</li>
+          <li>Provide insights for sales prediction and model stacking</li>
+        </ul>
+
+        <div class="highlight">
+          <h3>Dataset Source</h3>
+          <p>
+            Kaggle Competition: "Forecasting Sticker Sales" - Synthetic dataset
+            to prevent data leakage and ensure fair evaluation
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 3: Dataset Overview -->
+      <div class="slide">
+        <h1>Dataset Overview</h1>
+
+        <div class="two-column">
+          <div>
+            <h2>Dataset Structure</h2>
+            <ul>
+              <li><strong>Training:</strong> 230,130 rows, 6 columns</li>
+              <li><strong>Testing:</strong> 98,550 rows, 5 columns</li>
+              <li><strong>Time Period:</strong> Jan 1, 2010 - Dec 31, 2016</li>
+              <li>
+                <strong>Countries:</strong> 6 (Canada, Finland, Italy, Kenya,
+                Norway, Singapore)
+              </li>
+            </ul>
+
+            <h3>Store Types</h3>
+            <ul>
+              <li>Discount Stickers</li>
+              <li>Stickers for Less</li>
+              <li>Premium Sticker Mart</li>
+            </ul>
+          </div>
+
+          <div>
+            <h2>Products</h2>
+            <ul>
+              <li>Holographic Goose</li>
+              <li>Kaggle</li>
+              <li>Kaggle Tiers</li>
+              <li>Kerneler</li>
+              <li>Kerneler Dark Mode</li>
+            </ul>
+
+            <h3>Target Variable Statistics</h3>
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <h4>Mean Sales</h4>
+                <div class="value">752.5</div>
+              </div>
+              <div class="metric-card">
+                <h4>Missing Values</h4>
+                <div class="value">8,871</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: Feature Engineering -->
+      <div class="slide">
+        <h1>Feature Engineering</h1>
+
+        <h2>Temporal Features</h2>
+        <ul>
+          <li>
+            <strong>Month Encoding:</strong> Sine and cosine transformations to
+            capture cyclical nature
+          </li>
+          <li>
+            <strong>Day of Week:</strong> Extracted and numerically encoded
+            (0=Monday to 6=Sunday)
+          </li>
+          <li>
+            <strong>Year Features:</strong> Multiple sinusoidal transformations
+            at varying frequencies
+          </li>
+          <li>
+            <strong>Important Dates:</strong> Binary flags for holidays and
+            significant dates
+          </li>
+        </ul>
+
+        <h2>Economic Indicators</h2>
+        <div class="highlight">
+          <h3>GDP Ratio Integration</h3>
+          <p>
+            Incorporated GDP data from World Bank as proxy for economic capacity
+            and consumer purchasing power
+          </p>
+          <div class="formula">
+            GDP Ratio = GDP of Country A / GDP of Country B
+          </div>
+        </div>
+
+        <h2>Data Preprocessing</h2>
+        <ul>
+          <li>
+            <strong>Missing Value Imputation:</strong> GDP-based imputation for
+            numerical features
+          </li>
+          <li>
+            <strong>Categorical Encoding:</strong> One-hot encoding with
+            baseline dropping
+          </li>
+          <li>
+            <strong>Multicollinearity Prevention:</strong> Systematic feature
+            selection
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 5: Regression Models Overview -->
+      <div class="slide">
+        <h1>Regression Models</h1>
+
+        <div class="two-column">
+          <div>
+            <h2>Traditional Methods</h2>
+            <h3>Linear Regression</h3>
+            <div class="formula">Y = β₀ + β₁X₁ + β₂X₂ + ... + ε</div>
+
+            <h3>Ridge Regression</h3>
+            <div class="formula">min Σ(yᵢ - β'xᵢ)² + λΣβₖ²</div>
+
+            <h3>Lasso Regression</h3>
+            <div class="formula">min Σ(yᵢ - β'xᵢ)² + λΣ|βₖ|</div>
+          </div>
+
+          <div>
+            <h2>Advanced Methods</h2>
+            <h3>Tree-based Models</h3>
+            <ul>
+              <li><strong>XGBoost:</strong> Gradient boosted decision trees</li>
+              <li>
+                <strong>CatBoost:</strong> Handles categorical features
+                automatically
+              </li>
+              <li>
+                <strong>LightGBM:</strong> Histogram-based, leaf-wise growth
+              </li>
+            </ul>
+
+            <h3>Deep Learning</h3>
+            <ul>
+              <li><strong>Transformer-WaveNet:</strong> Hybrid architecture</li>
+              <li>Combines CNN efficiency with Transformer expressiveness</li>
+              <li>Multi-head self-attention mechanism</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 6: Transformer Architecture -->
+      <div class="slide">
+        <h1>Transformer-WaveNet Architecture</h1>
+
+        <h2>Key Components</h2>
+        <div class="two-column">
+          <div>
+            <h3>WaveNet Blocks</h3>
+            <ul>
+              <li>Multi-scale temporal pattern capture</li>
+              <li>Dilated convolutions with gated activations</li>
+              <li>Local feature extraction efficiency</li>
+            </ul>
+
+            <h3>Transformer Blocks</h3>
+            <ul>
+              <li>4-head multi-head self-attention</li>
+              <li>Layer normalization and residual connections</li>
+              <li>Position-wise feed-forward networks</li>
+              <li>GELU activation functions</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3>Architecture Benefits</h3>
+            <ul>
+              <li>Captures both local and global dependencies</li>
+              <li>Computational complexity: O(T²d)</li>
+              <li>Skip connections preserve information flow</li>
+              <li>Optimized for multi-dimensional forecasting</li>
+            </ul>
+
+            <h3>Training Configuration</h3>
+            <ul>
+              <li>Adam optimizer (lr=1e-3)</li>
+              <li>MSE loss function</li>
+              <li>15-epoch cosine annealing schedule</li>
+              <li>Feature dimensions: 64, Hidden: 128</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 7: Individual Model Results -->
+      <div class="slide">
+        <h1>Individual Model Results</h1>
+
+        <h2>MAPE Performance Comparison</h2>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>MAPE Score</th>
+              <th>Performance Category</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Linear Regression</td>
+              <td>0.08993</td>
+              <td>Baseline</td>
+            </tr>
+            <tr>
+              <td>Ridge Regression</td>
+              <td>0.05952</td>
+              <td>Regularized</td>
+            </tr>
+            <tr>
+              <td>Lasso Regression</td>
+              <td>0.06813</td>
+              <td>Regularized</td>
+            </tr>
+            <tr>
+              <td>CatBoost</td>
+              <td>0.05321</td>
+              <td>Tree-based</td>
+            </tr>
+            <tr>
+              <td>XGBoost</td>
+              <td>0.05123</td>
+              <td>Tree-based</td>
+            </tr>
+            <tr>
+              <td>Transformer</td>
+              <td>0.05263</td>
+              <td>Deep Learning</td>
+            </tr>
+            <tr class="best-score">
+              <td>LightGBM</td>
+              <td>0.05118</td>
+              <td>Tree-based (Best Individual)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="highlight">
+          <h3>Key Insights</h3>
+          <p>
+            Tree-based methods significantly outperform traditional linear
+            approaches, with LightGBM leading individual model performance.
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 8: Ensemble Results -->
+      <div class="slide">
+        <h1>Ensemble Model Results</h1>
+
+        <h2>Model Combination Performance</h2>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Model Combination</th>
+              <th>MAPE Score</th>
+              <th>Improvement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>LightGBM + XGBoost</td>
+              <td>0.05113</td>
+              <td>Marginal</td>
+            </tr>
+            <tr>
+              <td>LightGBM + XGBoost + CatBoost</td>
+              <td>0.05231</td>
+              <td>Negative</td>
+            </tr>
+            <tr>
+              <td>Lasso + Ridge</td>
+              <td>0.06662</td>
+              <td>Poor</td>
+            </tr>
+            <tr>
+              <td>LightGBM + Ridge</td>
+              <td>0.05532</td>
+              <td>Moderate</td>
+            </tr>
+            <tr>
+              <td>Weighted Average (All Models)</td>
+              <td>0.05132</td>
+              <td>Limited</td>
+            </tr>
+            <tr>
+              <td>LightGBM + Transformer</td>
+              <td>0.04943</td>
+              <td>Significant</td>
+            </tr>
+            <tr class="best-score">
+              <td>LightGBM + XGBoost + Transformer</td>
+              <td>0.04893</td>
+              <td>Best Overall</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="highlight">
+          <h3>Ensemble Success Factors</h3>
+          <p>
+            Strategic combination of complementary approaches (tree-based + deep
+            learning) yields superior performance over broad aggregation.
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 9: Model Stacking Method -->
+      <div class="slide">
+        <h1>Model Stacking Methodology</h1>
+
+        <h2>Optimization Process</h2>
+        <div class="two-column">
+          <div>
+            <h3>Weight Optimization</h3>
+            <ul>
+              <li>Custom loss function based on MAPE</li>
+              <li>Weights constrained to sum to 1</li>
+              <li>Scipy.optimize.minimize for optimization</li>
+              <li>Cross-validation for performance assessment</li>
+            </ul>
+
+            <div class="formula">L(w) = MAPE(Σ(wᵢ × pᵢ), y)</div>
+          </div>
+
+          <div>
+            <h3>Hyperparameter Tuning</h3>
+            <ul>
+              <li><strong>GridSearchCV:</strong> 5-fold cross-validation</li>
+              <li>
+                <strong>XGBoost:</strong> learning_rate (0.01-0.3), max_depth
+                (3-10)
+              </li>
+              <li><strong>Tree Models:</strong> n_estimators (100-1000)</li>
+              <li>
+                <strong>Transformer:</strong> Adam optimizer, cosine annealing
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Performance Evaluation</h2>
+        <div class="highlight">
+          <h3>MAPE Formula</h3>
+          <div class="formula">MAPE = (1/n) Σ |Y_R - Y_P| / Y_R</div>
+          <p>
+            where Y_P is predicted value, Y_R is actual value, n is number of
+            observations
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 10: Key Findings -->
+      <div class="slide">
+        <h1>Key Findings</h1>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <h4>Best Individual Model</h4>
+            <div class="value">LightGBM</div>
+            <p>MAPE: 0.05118</p>
+          </div>
+          <div class="metric-card">
+            <h4>Best Ensemble</h4>
+            <div class="value">LightGBM + XGBoost + Transformer</div>
+            <p>MAPE: 0.04893</p>
+          </div>
+          <div class="metric-card">
+            <h4>Improvement</h4>
+            <div class="value">4.4%</div>
+            <p>vs. Best Individual</p>
+          </div>
+        </div>
+
+        <h2>Critical Success Factors</h2>
+        <ul>
+          <li>
+            <strong>Feature Engineering:</strong> Cyclical encoding and GDP
+            integration crucial
+          </li>
+          <li>
+            <strong>Model Complementarity:</strong> Tree-based + Deep learning
+            combination effective
+          </li>
+          <li>
+            <strong>Strategic Selection:</strong> Thoughtful model pairing
+            outperforms broad aggregation
+          </li>
+          <li>
+            <strong>Non-linear Relationships:</strong> Advanced methods capture
+            complex patterns
+          </li>
+        </ul>
+
+        <div class="highlight">
+          <h3>Practical Implications</h3>
+          <p>
+            The ensemble approach provides actionable insights for inventory
+            management and strategic planning in retail environments.
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 11: Limitations & Future Work -->
+      <div class="slide">
+        <h1>Limitations & Future Work</h1>
+
+        <div class="two-column">
+          <div>
+            <h2>Current Limitations</h2>
+            <ul>
+              <li>
+                <strong>Synthetic Data:</strong> Limited real-world
+                generalizability
+              </li>
+              <li>
+                <strong>Geographic Scope:</strong> Only 6 countries represented
+              </li>
+              <li>
+                <strong>Economic Assumptions:</strong> GDP-based imputation may
+                not reflect actual dynamics
+              </li>
+              <li>
+                <strong>Computational Costs:</strong> Ensemble methods not
+                evaluated for feasibility
+              </li>
+              <li>
+                <strong>Temporal Scope:</strong> Performance across different
+                time periods unexplored
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2>Future Research Directions</h2>
+            <ul>
+              <li>
+                <strong>Dataset Expansion:</strong> Longer time series,
+                additional regions
+              </li>
+              <li>
+                <strong>External Factors:</strong> Social media, marketing data
+                integration
+              </li>
+              <li>
+                <strong>Advanced Techniques:</strong> Meta-learning, attention
+                mechanisms
+              </li>
+              <li>
+                <strong>Optimization Methods:</strong> Bayesian optimization,
+                evolutionary algorithms
+              </li>
+              <li>
+                <strong>Real-world Validation:</strong> Testing on actual retail
+                data
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <h3>Research Impact</h3>
+          <p>
+            This work establishes a robust, adaptable framework with broad
+            applicability to forecasting challenges across various industries.
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 12: Conclusions -->
+      <div class="slide">
+        <h1>Conclusions</h1>
+
+        <h2>Research Contributions</h2>
+        <ul>
+          <li>
+            <strong>Comprehensive Model Evaluation:</strong> Systematic
+            comparison from basic to advanced techniques
+          </li>
+          <li>
+            <strong>Ensemble Methodology:</strong> Demonstrated superior
+            performance of strategic model combinations
+          </li>
+          <li>
+            <strong>Feature Engineering Insights:</strong> Importance of
+            temporal and economic feature integration
+          </li>
+          <li>
+            <strong>Practical Framework:</strong> Scalable approach for
+            real-world business applications
+          </li>
+        </ul>
+
+        <h2>Business Impact</h2>
+        <div class="highlight">
+          <h3>Actionable Outcomes</h3>
+          <ul>
+            <li>
+              Enhanced inventory management through accurate demand prediction
+            </li>
+            <li>Optimized marketing strategies based on forecasted trends</li>
+            <li>
+              Improved resource allocation and reduced overstock/understock
+              scenarios
+            </li>
+            <li>Strategic planning support for multi-regional operations</li>
+          </ul>
+        </div>
+
+        <div class="author-info">
+          <h3>Acknowledgments</h3>
+          <p>
+            Special thanks to Kaggle for hosting the "Forecasting Sticker Sales"
+            competition and providing an excellent platform for advancing data
+            science skills.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="navigation">
+      <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">
+        Previous
+      </button>
+      <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">
+        Next
+      </button>
+    </div>
+
+    <script>
+      let currentSlide = 0;
+      const slides = document.querySelectorAll(".slide");
+      const totalSlides = slides.length;
+
+      function showSlide(n) {
+        slides[currentSlide].classList.remove("active");
+        currentSlide = (n + totalSlides) % totalSlides;
+        slides[currentSlide].classList.add("active");
+
+        document.getElementById("slide-counter").textContent = `${
+          currentSlide + 1
+        } / ${totalSlides}`;
+
+        document.getElementById("prevBtn").disabled = currentSlide === 0;
+        document.getElementById("nextBtn").disabled =
+          currentSlide === totalSlides - 1;
+      }
+
+      function changeSlide(n) {
+        if (currentSlide + n >= 0 && currentSlide + n < totalSlides) {
+          showSlide(currentSlide + n);
+        }
+      }
+
+      // Initialize
+      showSlide(0);
+
+      // Keyboard navigation
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowLeft") changeSlide(-1);
+        if (event.key === "ArrowRight") changeSlide(1);
+      });
+    </script>
+  </body>
+</html>
